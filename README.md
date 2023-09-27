@@ -9,9 +9,12 @@ fit_to_first_stage.py - scikit-learn script to fit a Gaussian mixture model to t
 frb_loglike_norm_second.py - numpyro sampling script to run second stage (must be run once per BORG field)
 combine_constraints.py - combines the outputs of the second stage for each BORG field into a single file
 write_latex_table.py - makes a table in latex format containing the redshift constraints
+precalc_ints_sdss.py - used to calculate the dispersion measure along the line of sight to each FRB for each BORG field
+lss_new.py - auxiliary functions needed for precalc_ints_sdss.py
 
 first_stage_constraints.npz - first stage constraints used in draft
 gm_fit_test.npz - GMM fit to first stage used in draft
 sdss_frbs_ne2001.npz - unlocalised FRBs (with Milky Way contribution subtracted)
 sdss_labels_no_repeats.npz - CHIME labels for unlocalised FRBs
 tabulated_integrals_sdss_6000_9000.npz - line-of-sight integrals for unlocalised FRBs for all BORG fields
+localised_frbs_20_ne2001.npz - localised FRBs (with Milky Way contribution subtracted)
