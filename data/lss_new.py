@@ -228,8 +228,8 @@ def ccl_correction(z, z_ints, exceeds):
                                                                                                           
     # Then, we construct the power spectrum                                                               
     # Choose an l range                                                                                   
-    # Code tests show that the unconstrained part converges for l>3000, so use this here                                                               
-    ells = np.arange(0,3000)                                                                               
+    # Code tests show that the unconstrained part converges for l>6000000, so use this here                                                               
+    ells = np.arange(0,6000000)                                                                               
     # Impose k cut on power spectrum (just use modes in box)                                              
     # Copying the documentation example:                                                                  
     sf = (1./(1+z_range))[::-1]
@@ -243,8 +243,8 @@ def ccl_correction(z, z_ints, exceeds):
     cls = ccl.angular_cl(ccl_cosmo,custom,custom,ells, p_of_k_a = pk_cut) 
                                                                                                           
     # Sum contributions from each Cl to give the unconstrained contribution which we return                                                                                   
-    #dm_uncon_2 = np.sum( ( (2*ells + 1) * cls) / (4*pi) )                                              
-    dm_uncon_2 = ccl.correlations.correlation(ccl_cosmo,ells,cls,theta=2,method='Bessel')  
+    dm_uncon_2 = np.sum( ( (2*ells + 1) * cls) / (4*pi) )                                              
+
     return dm_uncon_2
 ####
 
@@ -275,7 +275,7 @@ def cl_calc(z):
                                                                                                           
     # Then, we construct the power spectrum                                                               
     # Choose an l range                                                                                                                                        
-    ells = np.arange(0,3000)                                                                               
+    ells = np.arange(0,6000000)                                                                               
     # Impose k cut on power spectrum (just use modes in box)                                              
     # Copying the documentation example:                                                                  
     sf = (1./(1+z_range))[::-1]                                                                         
@@ -289,14 +289,17 @@ def cl_calc(z):
     cls = ccl.angular_cl(ccl_cosmo,custom,custom,ells, p_of_k_a = pk_cut) 
                                                                                                           
     # Sum contributions                                                                                   
-    #dm_uncon_2 = np.sum( ( (2*ells + 1) * cls) / (4*pi) )                                              
-    dm_uncon_2 = ccl.correlations.correlation(ccl_cosmo,ells,cls,theta=2,method='Bessel')  
+    dm_uncon_2 = np.sum( ( (2*ells + 1) * cls) / (4*pi) )                                              
+
                                                                                                            
     return dm_uncon_2
 ####
 
 ####
 def cl_calc2(z):
+    # This is a test function used to compare bits and bobs in the unconstrained contribution calculation
+    # Currently not used in the actual process
+    
     # Calculate the unconstrained variance at some redshift.
     # Note, here, we calculate from z=0 to some value, rather than
     # from the edge of the box.
