@@ -1,3 +1,7 @@
+## Script to calculate the line-of-sight integrals of an FRB
+## There are a lot of options in this file, which should be 
+## commented at each stage.
+
 import numpy as np
 from lss_new import los_int_ccl, tabulate_z, ccl_correction
 import h5py as h5
@@ -6,7 +10,7 @@ import matplotlib.pyplot as plt
 
 # Choose whether we make mock data, or load real data
 make_mocks = True
-# Choose whether we use a real field or not
+# Choose whether we use a real field or not in the los integral
 mock_field = False
 # Choose whether we load existing mock data (to do precalculation for many mocks in steps)
 load_mocks = False
@@ -22,47 +26,50 @@ if mock_field == True:
 else:
     print('Using real field(s)...')
 
-
+# Start with making/loading FRB data and fields.
 if make_mocks == True:
     if load_mocks == False:     
-    
+        # Choose number of FRBs to make
         nfrbs = 1000
         print(f'Making {nfrbs} mocks')
      
         if mock_field == True:
-        # Choose field dimension
+        # Describe a fake mock field
             N = 4                                             
             #L = 2000/(H0/100)       
             L = 100
             xmin = np.ones((3)) * -L/2
             nfields = 1                                                        
-            #fields = np.zeros((nfields,N,N,N))
             fields = np.ones((nfields,N,N,N))    
                                                                      
             # Make fields:
+            # Some examples given here...
             #fields[0,:,:,:] = 1
             #fields[0] = np.random.uniform(-0.5,0.5,size=(N,N,N))
             #fields[2] += np.random.uniform(-0.05,0.05,size=(N,N,N))
             #fields[3] += np.random.uniform(-0.15,0.15,size=(N,N,N))
             #fields[1,:,:,:] += np.random.uniform(-0.1,0,1)
         else:
+            # Use a real field
+            # Default here uses the SDSS BOSS BORG samples labelled by values in next line
             labs = [6000,6200,6400,6600,6800,7000,7200,7400,7600,7800,8000,8200,8400,8600,8800,9000]
             nfields = len(labs)
-            N = 256 #np.shape(field)[0]
+            N = 256 
+            # Cycle through fields and save density fields to an array
             fields = np.zeros((nfields,N,N,N))
             for i in range(nfields):
                 file = f'sdss_boss_final_density_{labs[i]}.h5'
                 hf = h5.File(file,'r') 
                 field = np.array(hf['scalars/BORG_final_density'])
                 fields[i,:,:,:] = field
-    
+            # Describe SDSS BOSS field 
             L = 4000
             xmin = np.ones((3))
             xmin[0] = -2200
             xmin[1] = -2000
             xmin[2] = -300
     
-        # Make FRB z, ra, dec
+        # Make mock FRB z, ra, dec
     
         ra = np.random.uniform(150,200,size=(nfrbs))#45 * np.ones((nfrbs))
         dec = np.random.uniform(20,50,size=(nfrbs))#45 * np.ones((nfrbs))
@@ -93,15 +100,17 @@ if make_mocks == True:
             field = np.array(hf['scalars/field'])
             fields[i,:,:,:] = field
                                                                                                    
-        L = 750
+        L = 4000
         xmin = np.ones((3))
-        xmin[0] = -700
-        xmin[1] = -375
-        xmin[2] = -50
+        xmin[0] = -2200
+        xmin[1] = -2000
+        xmin[2] = -300
 
 else:
-
+    # Use real FRB data
+    
     # Load data (ra and dec, and known zs)
+    
     file = 'sdss_frbs_ne2001.npz' # 'localised_frbs_20_ne2001.npz'
     hf = np.load(file)
     list(hf.keys())
@@ -112,31 +121,22 @@ else:
 
 
     nfrbs = len(ra)
-    #nfields = 1
 
     print('Data used:')
     print(file)
 
     # Load fields
-    #file = 'final_density_6000.h5'
-    #hf = h5.File(file,'r')
-    #print(hf['scalars'].keys())
-    #field = np.array(hf['scalars/field'])
-    #N = np.shape(field)[0]
-    #fields = np.zeros((nfields,N,N,N))
-    #fields[0,:,:,:] = field
+    # NOTE: Default is SDSS BOSS fields with the numerical labels below
         
     labs = [6000,6200,6400,6600,6800,7000,7200,7400,7600,7800,8000,8200,8400,8600,8800,9000]
     nfields = len(labs)
-    N = 256 #np.shape(field)[0]
+    N = 256 
     fields = np.zeros((nfields,N,N,N))
     for i in range(nfields):
         file = f'sdss_boss_final_density_{labs[i]}.h5'
         hf = h5.File(file,'r')
-    #print(hf['scalars'].keys())
         field = np.array(hf['scalars/BORG_final_density'])
         fields[i,:,:,:] = field
-
                                   
     L = 4000
     xmin = np.ones((3))
@@ -144,15 +144,11 @@ else:
     xmin[1] = -2000
     xmin[2] = -300
 
-    
-# Run prerequisite
-#z_values, r_at_z = tabulate_z()
-#r_at_z /= 10*H0**2
-#print(f'Checking conversion from z to r:')
-#print(f'zs = {z_values[:40]}')
-#print(f'rs = {r_at_z[:40]}')
 
-# Choose upper z limit for increments
+
+## With data & fields uploaded, now begin to calculate the los integrals
+
+# Choose upper z limit for increments which we use to discretise the integrals
 z_max = 1.0
 
 # Choose number of z increments to calculate at
@@ -160,7 +156,12 @@ M = 50
 z_ints = np.linspace(0,z_max,M)
 print(f'z_ints = {z_ints}')
 
+
 if use_subset == False:
+    # Use the whole of the presaved dataset.
+    # This is the option we use with real data.
+
+    # Define arrays to save things
     tabulated_z = np.zeros((M))
     tabulated_los_int = np.zeros((nfields,nfrbs,M))
     tabulated_los_int_grad = np.zeros((nfields,nfrbs,M))
@@ -179,23 +180,27 @@ if use_subset == False:
         # Loop over fields
         for i in range(nfields):
             field = fields[i,:,:,:]
-            # Produce the unscaled los integral at each z interval, the density contrast at each interval,  and whether that interval has exceed the box              
+            # Produce the unscaled los integral at each z interval, the density contrast at each interval,  and whether that interval has exceeded the box              
             integrals, exceeds, density  = los_int_ccl(field,L,xmin,ra[j],dec[j],z_ints)
             tabulated_los_int[i,j,:] = integrals 
             tabulated_exceeds[j,:] = exceeds
-            #tabulated_den[i,j,:] = density
+            tabulated_den[i,j,:] = density
             tabulated_los_int_grad[i,j,:] = np.gradient(integrals,z_ints)
     
-        # Do the ccl correction (only loop over FRBs here as it is the same for all fields)
+        # Calculate the unconstrained contribution to the fluctuation part of the DM (only loop over FRBs here as it is the same for all fields)
         for k in range(len(z_ints)):
             if tabulated_exceeds[j,k] == 0:
                 continue
             else:
+                # The function name is a bit misleading because I didn't understand it for a while.
                 uncon = ccl_correction(z_ints[k],z_ints,tabulated_exceeds[j,:])
                 tabulated_ccl[j,k] = uncon        
         # Get the gradient for the ccl correction            
         tabulated_ccl_grad[j,:] = np.gradient(tabulated_ccl[j,:],z_ints)
 else:
+    # Here, use a subset of the FRB data.
+    # As we can always calculate for the full set and split up the full thing
+    # This option can probably be ignored
     if load_mocks == False:
         start = 0 
         end = 50
@@ -238,6 +243,11 @@ else:
         tabulated_ccl_grad[j,:] = np.gradient(tabulated_ccl[j,:],z_ints)
 
 
+# Save the results of the integration
+# Naming convention: 
+# 'mocks' = mock data
+# sdss/localised = that type of FRB
+# {labs[0]}_{labs[-1]} = range of SDSS BOSS indices used to calculate the integrals
 
 if make_mocks == True:
     if mock_field == True:
@@ -257,7 +267,10 @@ if make_mocks == True:
 else:
     np.savez(f'tabulated_integrals_sdss_{labs[0]}_{labs[-1]}',tabulated_integrals=tabulated_los_int,tabulated_z=tabulated_z,tabulated_exceeds=tabulated_exceeds, tabulated_ccl = tabulated_ccl)
 
+#######
+## Diagnostics
 
+# Print some outputs
 print('integrals precalculated')
 print('tabulated integral for field 0, frb 0 =')
 print(tabulated_los_int[0,0,:])
