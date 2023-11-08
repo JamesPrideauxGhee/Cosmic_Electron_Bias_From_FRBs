@@ -3,7 +3,7 @@
 ## commented at each stage.
 
 import numpy as np
-from lss_new import los_int_ccl, tabulate_z, ccl_correction
+from lss_new import los_int_ccl, tabulate_z, ccl_correction, cl_calc
 import h5py as h5
 import matplotlib.pyplot as plt
 
@@ -237,7 +237,11 @@ else:
             if tabulated_exceeds[j,k] == 0:
                 continue
             else:
+                ######## IMPORTANT ########
+                # Use this line for SDSS BOSS FRBS
                 uncon = ccl_correction(z_ints[k],z_ints,tabulated_exceeds[j,:])
+                # Use this line for localised FRBs that lie outside footprint (calculate from z=0 rather than box edge)
+                #uncon = cl_calc(z_ints[k])
                 tabulated_ccl[j,k] = uncon        
         # Get the gradient for the ccl correction            
         tabulated_ccl_grad[j,:] = np.gradient(tabulated_ccl[j,:],z_ints)
